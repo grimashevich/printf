@@ -7,4 +7,4 @@ file(GLOB SOURCES
         libft/libft.h
         libft/*.c)
 
-add_executable(printf main.c ${SOURCES})
+add_executable(printf main.c ${SOURCES} functions_0.c functions_1.c functions_2.c)
