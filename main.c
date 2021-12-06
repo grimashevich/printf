@@ -26,11 +26,4 @@ int	main(void)
 	printf("\na1 = %d\na2 = %d\n", a1, a2);
 
     return (0);
-	int	i;
-	int	*pi;
-
-	i = 1;
-	pi = &i;
-	ft_printf("%p", pi);
-	return (0);
 }
