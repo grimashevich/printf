@@ -15,21 +15,15 @@
 
 int	main(void)
 {
-    char 	*str;
 	char	**pstr;
 	int		i;
-	char	u_params[64] = "A-20.5d";
+	char	*str = ft_strdup("#0+10.5d");
 	char	u_params2[64] = "";
 
-
-	printf("%s\n", first_num_zero(u_params));
-	printf("%d", ft_atoi(u_params));
+	char *flags = copy_bonus_flags(&str);
+	printf("flags =\t%20s\n", flags);
+	printf("zero =\t%20p\n", pf_get_zero(flags));
+	printf("width =\t%20d\n", pf_get_min_width(flags));
+	printf("prec =\t%20d\n", pf_get_precision(flags));
 	return (0);
-
-	str = ft_strdup("sTring1");
-	pstr = &str;
-
-	printf("%-20.5d\n", 5);
-	printf("%c\n", **(pstr+1));
-    return (0);
 }

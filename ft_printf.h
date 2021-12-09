@@ -36,10 +36,13 @@ char	*pointer_to_str(unsigned long p);
 char	*ui_to_str(unsigned n);
 int		print_str(char *s, int need_free, int zero_c);
 void	str_reverse(char *s, int last);
-size_t	copy_bonus_flags(char **params, char *bonus_flags);
+char	*copy_bonus_flags(char **params);
 void	ft_putstr_fd2(char *s, int fd, int byte_n_diff);
 char	*char_to_str(char c);
 int		process_sym(va_list *params);
-const	char *first_num_zero(const char *str);
+const	char *pf_get_zero(const char *str);
+int		pf_get_min_width(char *str);
+int		pf_get_precision(char *str);
+
 
 #endif

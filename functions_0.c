@@ -65,21 +65,53 @@ int	printer(const char *c, va_list *params)
 		return(print_str("%", 0, 0));
 	return (0);
 }
-/*Копирует бонусные флаги и сдвигает указатель стрки параметров на после флагов*/
-size_t copy_bonus_flags(char **params, char *bonus_flags)
+
+/*Копирует бонусные флаги и сдвигает указатель стрки параметров на после флагов
+ * На вход подается строка с указателем на симвлол, следующая сразу за %*/
+char	*copy_bonus_flags(char **params)
 {
 	int		i;
 	char	*flags;
+	char	*bonus_flags;
 
+	bonus_flags = malloc(128);
+	if (! bonus_flags)
+		return (NULL);
 	flags = ft_printf_flags;
 	i = 0;
 	while (ft_strchr(flags, **params))
 		bonus_flags[i++] = *(*params)++;
 	bonus_flags[i] = 0;
-	return (ft_strlen(bonus_flags));
+	return (bonus_flags);
 }
 
-const char *first_num_zero(const char *str)
+/*Возвращает точность из строки формата printf*/
+int pf_get_precision(char *str)
+{
+	while (*str != '.')
+	{
+		if (*str == 0)
+			return (0);
+		str++;
+	}
+	return (ft_atoi(++str));
+}
+
+/*Возвращает минимальную длину из строки формата printf*/
+int pf_get_min_width(char *str)
+{
+	while (! ft_isdigit(*str) || *str == '0')
+	{
+		if (*str == '.' || *str == 0)
+			return (0);
+		str++;
+	}
+	return (ft_atoi(str));
+}
+
+/*Ищет флаг '0' в строке формата для print_f и возвращает указатель
+* на него или NULL если ничего не находит */
+const char *pf_get_zero(const char *str)
 {
 	if (str == NULL)
 		return (NULL);
@@ -107,6 +139,10 @@ void	fill_sf_element(s_flags *el, const char *flags, char sym)
 	el->sym = sym;
 	if (ft_strchr(pf_keys, '-'))
 		el->l_align = 1;
+	if (ft_strchr(pf_keys, '#'))
+		el->mod_hex = 1;
+	if (ft_strchr(pf_keys, '#'))
+		el->mod_hex = 1;
 }
 
 s_flags *create_sf_element(const char *flags, char sym)
@@ -132,7 +168,6 @@ int	ft_printf(const char *input, ...)
 {
 	va_list	params;
 	int		result;
-	char	flags[128];
 
 	result = 0;
 	va_start(params, input);
@@ -141,10 +176,7 @@ int	ft_printf(const char *input, ...)
 		if (*input == '%')
 		{
 			input++;
-			copy_bonus_flags((char **) &input, flags);
 			result += printer(input, &params);
-			print_str("\t\t", 0, 0);
-			print_str(flags, 0, 0);
 		}
 		else
 		{
