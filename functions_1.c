@@ -12,56 +12,61 @@
 
 #include "ft_printf.h"
 
-int	ft_putui_fd(unsigned int n, int fd)
+int		process_sym(va_list *params)
 {
-	char					digs[20];
-	int						i;
-	unsigned int			n2;
+	char	sym;
+	sym = (char) va_arg(*params, int);
+	if (sym == 0)
+		return (print_str(char_to_str(sym), 1, 1));
+	return (print_str(char_to_str(sym), 1, 0));
+}
 
-	n2 = n;
+void	ft_putstr_fd2(char *s, int fd, int byte_n_diff)
+{
+	if (!s)
+		return;
+	write(fd, &s[0], ft_strlen(s) + byte_n_diff);
+}
+
+char *ui_to_str(unsigned n)
+{
+	char			*digs;
+	int				i;
+
 	i = 0;
 	if (n == 0)
-		write(fd, "0", 1);
-	else if (n > 0)
+		return (ft_strdup("0"));
+	digs = malloc(11);
 	while (n)
 	{
 		digs[i] = (char) ((n % 10) + 48);
 		n = n / 10;
 		i++;
 	}
-	digs[i] = 0;
-	while (i)
-	{
-		write(fd, &digs[i - 1], 1);
-		i--;
-	}
-	if (n2 == 0)
-		return (1);
-	return ((int) ft_strlen(digs));
-}
-
-int	print_and_free(char **str)
-{
-	int	len;
-
-	if (str == NULL || *str == NULL)
-		return (0);
-	len = (int) ft_strlen(*str);
-	ft_putstr_fd(*str, 1);
-	free(*str);
-	*str = NULL;
-	return (len);
+	digs[i--] = 0;
+	str_reverse(digs, i);
+	return (digs);
 }
 
 
-int	print_pointer(unsigned long p)
+char	*pointer_to_str(unsigned long p)
 {
 	char	*hex;
+	char	*result;
 
 	if (p == 0)
-		return (print_str("0x0", 0));
-	ft_putstr_fd("0x", 1);
+		return ft_strdup("0x0");
 	hex = i_to_base_str(p, 16, 87);
-	return (print_and_free(&hex) + 2);
+	if (hex == NULL)
+		return (NULL);
+	result = ft_strjoin("0x", hex);
+	if (result == NULL)
+	{
+		free(hex);
+		return (NULL);
+	}
+	free(hex);
+	return (result);
+
 }
 

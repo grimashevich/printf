@@ -12,45 +12,32 @@
 
 #include "ft_printf.h"
 
-int print_int(int num)
-{
-	int	len;
-
-	if (num >= 0)
-		len = 0;
-	else
-		len = 1;
-	ft_putnbr_fd(num, 1);
-	if (num == 0)
-		return (1);
-	while (num)
-	{
-		num /= 10;
-		len++;
-	}
-	return (len);
-}
-
-int print_str(char *s, int need_free)
+int print_str(char *s, int need_free, int zero_c)
 {
 	int	len;
 
 	if (s == NULL)
 	{
-		ft_putstr_fd("(null)", 1);
-		return (6);
+		s = ft_strdup("(null)");
+		need_free = 1;
 	}
-	ft_putstr_fd(s, 1);
-	len = (int) ft_strlen(s);
+	ft_putstr_fd2(s, 1, zero_c);
+	len = (int) ft_strlen(s) + zero_c;
 	if (need_free)
 		free(s);
 	return (len);
 }
 
-int print_char(char c)
+char *char_to_str(char c)
 {
-	ft_putchar_fd(c, 1);
-	return (1);
+	char	*c_str;
+
+	c_str = malloc(2);
+	if (! c_str)
+		return (NULL);
+	c_str[0] = c;
+	c_str[1] = 0;
+	return (c_str);
 }
 
 int	printer(const char *c, va_list *params)
@@ -58,40 +45,113 @@ int	printer(const char *c, va_list *params)
 	char	*pf_keys;
 	char	*key;
 
-	pf_keys = "cspdiuxX%";
+	pf_keys = ft_printf_keys;
 	key = ft_strchr(pf_keys, *c);
 	if (*key == 'c')
-		return (print_char(va_arg(*params, int)));
+		return (process_sym(params));
 	else if (*key == 's')
-		return (print_str(va_arg(*params, char *), 0));
+		return (print_str(va_arg(*params, char *), 0, 0));
 	else if (*key == 'p')
-		return (print_pointer(va_arg(*params, unsigned long)));
+		return (print_str(pointer_to_str(va_arg(*params, unsigned long)), 1, 0));
 	else if (*key == 'd' || *key == 'i')
-		return(print_int(va_arg(*params, int)));
+		return(print_str(ft_itoa(va_arg(*params, int)), 1, 0));
 	else if (*key == 'u')
-		return (ft_putui_fd(va_arg(*params, int), 1));
+		return (print_str(ui_to_str(va_arg(*params, int)), 1, 0));
 	else if (*key == 'x')
-		return(print_str(i_to_base_str((va_arg(*params, unsigned int)), 16, 87), 1));
+		return(print_str(i_to_base_str((va_arg(*params, unsigned int)), 16, 87), 1, 0));
 	else if (*key == 'X')
-		return(print_str(i_to_base_str((va_arg(*params, unsigned int)),16, 55), 1));
+		return(print_str(i_to_base_str((va_arg(*params, unsigned int)), 16, 55), 1, 0));
 	else if (*key == '%')
-		return(print_str("%", 0));
+		return(print_str("%", 0, 0));
 	return (0);
+}
+/*Копирует бонусные флаги и сдвигает указатель стрки параметров на после флагов*/
+size_t copy_bonus_flags(char **params, char *bonus_flags)
+{
+	int		i;
+	char	*flags;
+
+	flags = ft_printf_flags;
+	i = 0;
+	while (ft_strchr(flags, **params))
+		bonus_flags[i++] = *(*params)++;
+	bonus_flags[i] = 0;
+	return (ft_strlen(bonus_flags));
+}
+
+const char *first_num_zero(const char *str)
+{
+	if (str == NULL)
+		return (NULL);
+	while (*str)
+	{
+		if (ft_isdigit(*str) && *str != '0' )
+			return (NULL);
+		if (*str == '.')
+			return (NULL);
+		if (*str == '0')
+			return (str);
+		str++;
+	}
+	return (NULL);
+}
+
+void	fill_sf_element(s_flags *el, const char *flags, char sym)
+{
+	char	*pf_keys;
+
+	pf_keys = ft_printf_keys;
+
+	if (! ft_strchr(pf_keys, sym))
+		return ;
+	el->sym = sym;
+	if (ft_strchr(pf_keys, '-'))
+		el->l_align = 1;
+}
+
+s_flags *create_sf_element(const char *flags, char sym)
+{
+	s_flags	*el;
+
+	if (flags == NULL || *flags == 0 || sym == 0)
+		return (NULL);
+	el = malloc(sizeof(s_flags));
+	if (el == NULL)
+		return (NULL);
+	el->sym = 0;
+	el->l_align = 0;
+	el->min_width = 0;
+	el->mod_hex = 0;
+	el->precision = 0;
+	el->space_filling = 0;
+	el->zero_fill = 0;
+	return (el);
 }
 
 int	ft_printf(const char *input, ...)
 {
 	va_list	params;
-	int result;
+	int		result;
+	char	flags[128];
 
 	result = 0;
 	va_start(params, input);
 	while (*input)
 	{
 		if (*input == '%')
-			result += printer(++input, &params);
+		{
+			input++;
+			copy_bonus_flags((char **) &input, flags);
+			result += printer(input, &params);
+			print_str("\t\t", 0, 0);
+			print_str(flags, 0, 0);
+		}
 		else
-			result += print_char(*input);
+		{
+			ft_putchar_fd(*input, 1);
+			result++;
+		}
+
 		input++;
 	}
 	va_end(params);

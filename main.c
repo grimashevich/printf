@@ -15,15 +15,20 @@
 
 int	main(void)
 {
-    long int    a = 9999;
-    char *      str;
+    char 	*str;
+	char	**pstr;
+	int		i;
+	char	u_params[64] = "A-20.5d";
+	char	u_params2[64] = "";
 
-	str = malloc(10);
-	int a1 = ft_printf("%s", ft_strjoin("0   ", "123"));
-	printf("\n");
-	int a2 = printf("%#x", -2);
 
-	printf("\na1 = %d\na2 = %d\n", a1, a2);
+	printf("%s\n", first_num_zero(u_params));
+	printf("%d", ft_atoi(u_params));
+	return (0);
+	str = ft_strdup("sTring1");
+	pstr = &str;
 
+	printf("%-20.5d\n", 5);
+	printf("%c\n", **(pstr+1));
     return (0);
 }
