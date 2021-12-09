@@ -25,6 +25,7 @@ int	main(void)
 	printf("%s\n", first_num_zero(u_params));
 	printf("%d", ft_atoi(u_params));
 	return (0);
+
 	str = ft_strdup("sTring1");
 	pstr = &str;
 
