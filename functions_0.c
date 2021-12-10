@@ -66,8 +66,9 @@ int	printer(const char *c, va_list *params)
 	return (0);
 }
 
-/*Копирует бонусные флаги и сдвигает указатель стрки параметров на после флагов
- * На вход подается строка с указателем на симвлол, следующая сразу за %*/
+/*Копирует бонусные флаги из строки параметров printf и сдвигает указатель
+ * на символ, находящийс после флагов. На вход подается строка с указателем
+ * на симвлол, следующая сразу за %*/
 char	*copy_bonus_flags(char **params)
 {
 	int		i;
@@ -128,7 +129,7 @@ const char *pf_get_zero(const char *str)
 	return (NULL);
 }
 
-void	fill_sf_element(s_flags *el, const char *flags, char sym)
+void	fill_sf_element(s_flags *el, char *flags, char sym)
 {
 	char	*pf_keys;
 
@@ -137,12 +138,18 @@ void	fill_sf_element(s_flags *el, const char *flags, char sym)
 	if (! ft_strchr(pf_keys, sym))
 		return ;
 	el->sym = sym;
-	if (ft_strchr(pf_keys, '-'))
+	if (ft_strchr(flags, '-'))
 		el->l_align = 1;
-	if (ft_strchr(pf_keys, '#'))
+	if (ft_strchr(flags, '#'))
 		el->mod_hex = 1;
-	if (ft_strchr(pf_keys, '#'))
-		el->mod_hex = 1;
+	if (ft_strchr(flags, ' '))
+		el->space = 1;
+	if (ft_strchr(flags, '+'))
+		el->plus = 1;
+	if (pf_get_zero(flags))
+		el->zero_fill = 1;
+	el->min_width = pf_get_min_width(flags);
+	el->precision = pf_get_precision(flags);
 }
 
 s_flags *create_sf_element(const char *flags, char sym)
@@ -159,7 +166,7 @@ s_flags *create_sf_element(const char *flags, char sym)
 	el->min_width = 0;
 	el->mod_hex = 0;
 	el->precision = 0;
-	el->space_filling = 0;
+	el->space = 0;
 	el->zero_fill = 0;
 	return (el);
 }

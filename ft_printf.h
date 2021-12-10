@@ -24,7 +24,8 @@ typedef struct st_flags
 	char	l_align;
 	char	zero_fill;
 	char	mod_hex;
-	char	space_filling;
+	char	space;
+	char	plus;
 	size_t	min_width;
 	size_t	precision;
 	char	sym;
@@ -43,6 +44,8 @@ int		process_sym(va_list *params);
 const	char *pf_get_zero(const char *str);
 int		pf_get_min_width(char *str);
 int		pf_get_precision(char *str);
+s_flags	*create_sf_element(const char *flags, char sym);
+void	fill_sf_element(s_flags *el, char *flags, char sym);
 
 
 #endif
