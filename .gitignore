@@ -2,3 +2,5 @@
 cmake-build-debug
 /printfTester/
 .DS_Store
+push_gh.sh
+push_github.sh
