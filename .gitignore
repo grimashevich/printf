@@ -4,3 +4,5 @@ cmake-build-debug
 .DS_Store
 push_gh.sh
 push_github.sh
+*.o
+*.d
