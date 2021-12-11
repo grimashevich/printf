@@ -12,15 +12,148 @@
 
 #include "ft_printf.h"
 
-int print_str(char *s, int need_free, int zero_c)
+
+/*Возвращает строку состоящую из n символов "с"*/
+char *mp_char(char c, size_t n, char *add_str)
 {
-	int	len;
+	char	*result;
+	char	*result2;
+
+	if (n == 0)
+		return (NULL);
+	result = malloc(n + 1);
+	if (! result)
+		return (NULL);
+	result[n--] = 0;
+	while (n > 0)
+		result[n--] = c;
+	result[0] = c;
+	if (add_str && *add_str)
+	{
+		result2 = ft_strjoin(add_str, result);
+		free(result);
+		return (result2);
+	}
+	return result;
+}
+
+char *str_width_align_zero2(s_flags *flags, char *s, char *fill_str, char *add_str)
+{
+	char	*result;
+	size_t	move;
+
+	move = 0;
+	if (add_str[0])
+		move = 1;
+	if (flags->l_align)
+		result = ft_strjoin(s + move, fill_str);
+	else
+		result = ft_strjoin(fill_str, s + move);
+	return (result);
+}
+
+
+/*В эту функцию мы попадаем только тогда, когда мин. ширина > длины строки*/
+char *str_width_align_zero(s_flags *flags, char *s)
+{
+	size_t	len_diff;
+	char	fill_char;
+	char	*fill_str;
+	char	*result;
+	char	add_str[2];
+
+	len_diff = flags->min_width - ft_strlen(s);
+	add_str[0] = '-';
+	add_str[1] = 0;
+	fill_char = ' ';
+	if (flags->zero_fill && !flags->l_align && !flags->precision_on && ft_strchr("diuxX", flags->sym))
+		fill_char = '0';
+	if (s[0] != '-' || fill_char == '0' || flags->precision_on)
+		add_str[0] = 0;
+	fill_str = mp_char(fill_char, len_diff, add_str);
+	if (! fill_str)
+		return (NULL);
+	result = str_width_align_zero2(flags, s, fill_str, add_str);
+	free(fill_str);
+	free(s);
+	return (result);
+}
+
+char *str_precision(char *s, s_flags *flags)
+{
+	char	*result;
+	char	*fill_str;
+	size_t 	s_len;
+
+	s_len = ft_strlen(s);
+	result = s;
+	if (ft_strchr("diuxX", flags->sym) && flags->precision > s_len)
+	{
+		if (s[0] == '-')
+		{
+			fill_str = mp_char('0', flags->precision - s_len, "-");
+			result = ft_strjoin(fill_str, result + 1);
+		}
+		else
+		{
+			fill_str = mp_char('0', flags->precision - s_len, NULL);
+			result = ft_strjoin(fill_str, result);
+		}
+		free(fill_str);
+	}
+	else if (flags->sym == 's' && s_len > flags->precision)
+		result[flags->precision] = 0;
+	if (result != s)
+		free(s);
+	return (result);
+}
+
+char	*mod_hex(char *s, s_flags *flags)
+{
+	char	*result;
+
+	if (flags->sym == 'X')
+		result = ft_strjoin("0X", s);
+	else
+		result = ft_strjoin("0x", s);
+	free(s);
+	return (result);
+}
+
+char *add_plus(char *s)
+{
+	return (s);
+}
+
+/*Применяет флаги форматирования к строке*/
+char *apply_flags(char *s, s_flags *flags)
+{
+	char	*result;
+
+	if (! flags)
+		return (s);
+	result = s;
+	if (flags->precision)
+		result = str_precision(s, flags);
+	if (flags->mod_hex && ft_tolower(flags->sym) == 'x')
+		result = mod_hex(result, flags);
+	if (flags->plus && ft_strchr("diuxX", flags->sym))
+		result = add_plus(result);
+	if (flags->min_width > ft_strlen(result))
+		result = str_width_align_zero(flags, result);
+	return (result);
+}
+
+int print_str(char *s, int need_free, int zero_c, s_flags *flags)
+{
+	int		len;
 
 	if (s == NULL)
 	{
 		s = ft_strdup("(null)");
 		need_free = 1;
 	}
+	s = apply_flags(s, flags);
 	ft_putstr_fd2(s, 1, zero_c);
 	len = (int) ft_strlen(s) + zero_c;
 	if (need_free)
@@ -40,42 +173,82 @@ char *char_to_str(char c)
 	return (c_str);
 }
 
-int	printer(const char *c, va_list *params)
+char *str_to_str(char *s)
+{
+	if (s == NULL)
+		return ft_strdup("(null)");
+	return (ft_strdup(s));
+}
+
+int printer(char *b_flags, const char *c, va_list *params)
 {
 	char	*pf_keys;
 	char	*key;
+	s_flags	*flags;
 
 	pf_keys = ft_printf_keys;
 	key = ft_strchr(pf_keys, *c);
+	flags = get_pf_flags(b_flags, *key);
+	if (b_flags)
+		free(b_flags);
 	if (*key == 'c')
-		return (process_sym(params));
+		return (process_sym(params, flags));
 	else if (*key == 's')
-		return (print_str(va_arg(*params, char *), 0, 0));
+		return (print_str(str_to_str(va_arg(*params, char *)), 1, 0, flags));
 	else if (*key == 'p')
-		return (print_str(pointer_to_str(va_arg(*params, unsigned long)), 1, 0));
+		return (print_str(pointer_to_str(va_arg(*params, unsigned long)), 1, 0, flags));
 	else if (*key == 'd' || *key == 'i')
-		return(print_str(ft_itoa(va_arg(*params, int)), 1, 0));
+		return(print_str(ft_itoa(va_arg(*params, int)), 1, 0, flags));
 	else if (*key == 'u')
-		return (print_str(ui_to_str(va_arg(*params, int)), 1, 0));
+		return (print_str(ui_to_str(va_arg(*params, int)), 1, 0, flags));
 	else if (*key == 'x')
-		return(print_str(i_to_base_str((va_arg(*params, unsigned int)), 16, 87), 1, 0));
+		return(print_str(i_to_base_str((va_arg(*params, unsigned int)), 16, 87), 1, 0, flags));
 	else if (*key == 'X')
-		return(print_str(i_to_base_str((va_arg(*params, unsigned int)), 16, 55), 1, 0));
+		return(print_str(i_to_base_str((va_arg(*params, unsigned int)), 16, 55), 1, 0, flags));
 	else if (*key == '%')
-		return(print_str("%", 0, 0));
+		return(print_str("%", 0, 0, flags));
 	return (0);
+}
+
+/*Возвращает структуру с флагами c printf*/
+s_flags		*get_pf_flags(char *params, char sym)
+{
+	char	*pf_keys;
+	s_flags	*el;
+
+	el = create_sf_element(params, sym);
+	if (el == NULL)
+		return (NULL);
+	pf_keys = ft_printf_keys;
+
+	if (! ft_strchr(pf_keys, sym))
+		return (NULL);
+	el->sym = sym;
+	if (ft_strchr(params, '-'))
+		el->l_align = 1;
+	if (ft_strchr(params, '#'))
+		el->mod_hex = 1;
+	if (ft_strchr(params, ' '))
+		el->space = 1;
+	if (ft_strchr(params, '+'))
+		el->plus = 1;
+	if (pf_get_zero(params))
+		el->zero_fill = 1;
+	el->min_width = pf_get_min_width(params);
+	el->precision = pf_get_precision(params, el);
+	return (el);
 }
 
 /*Копирует бонусные флаги из строки параметров printf и сдвигает указатель
  * на символ, находящийс после флагов. На вход подается строка с указателем
  * на симвлол, следующая сразу за %*/
-char	*copy_bonus_flags(char **params)
+char	*copy_bonus_flags(const char **params)
 {
 	int		i;
 	char	*flags;
 	char	*bonus_flags;
 
-	bonus_flags = malloc(128);
+	bonus_flags = malloc(256);
 	if (! bonus_flags)
 		return (NULL);
 	flags = ft_printf_flags;
@@ -87,8 +260,10 @@ char	*copy_bonus_flags(char **params)
 }
 
 /*Возвращает точность из строки формата printf*/
-int pf_get_precision(char *str)
+int pf_get_precision(char *str, s_flags *el)
 {
+	if (ft_strchr(str, '.'))
+		el->precision_on = 1;
 	while (*str != '.')
 	{
 		if (*str == 0)
@@ -129,34 +304,12 @@ const char *pf_get_zero(const char *str)
 	return (NULL);
 }
 
-void	fill_sf_element(s_flags *el, char *flags, char sym)
-{
-	char	*pf_keys;
-
-	pf_keys = ft_printf_keys;
-
-	if (! ft_strchr(pf_keys, sym))
-		return ;
-	el->sym = sym;
-	if (ft_strchr(flags, '-'))
-		el->l_align = 1;
-	if (ft_strchr(flags, '#'))
-		el->mod_hex = 1;
-	if (ft_strchr(flags, ' '))
-		el->space = 1;
-	if (ft_strchr(flags, '+'))
-		el->plus = 1;
-	if (pf_get_zero(flags))
-		el->zero_fill = 1;
-	el->min_width = pf_get_min_width(flags);
-	el->precision = pf_get_precision(flags);
-}
-
-s_flags *create_sf_element(const char *flags, char sym)
+/*Создает элемент, содержащий список флагов printf и зануляет его*/
+s_flags *create_sf_element(const char *params, char sym)
 {
 	s_flags	*el;
 
-	if (flags == NULL || *flags == 0 || sym == 0)
+	if (params == NULL || *params == 0 || sym == 0)
 		return (NULL);
 	el = malloc(sizeof(s_flags));
 	if (el == NULL)
@@ -166,6 +319,7 @@ s_flags *create_sf_element(const char *flags, char sym)
 	el->min_width = 0;
 	el->mod_hex = 0;
 	el->precision = 0;
+	el->precision_on = 0;
 	el->space = 0;
 	el->zero_fill = 0;
 	return (el);
@@ -180,17 +334,13 @@ int	ft_printf(const char *input, ...)
 	va_start(params, input);
 	while (*input)
 	{
-		if (*input == '%')
-		{
-			input++;
-			result += printer(input, &params);
-		}
+		if (*input == '%' && input++ != NULL)
+			result += printer(copy_bonus_flags(&input), input, &params);
 		else
 		{
 			ft_putchar_fd(*input, 1);
 			result++;
 		}
-
 		input++;
 	}
 	va_end(params);

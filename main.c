@@ -15,19 +15,9 @@
 
 int	main(void)
 {
-	char	**pstr;
-	int		i;
-	char	*str = ft_strdup("#0+10.5d");
-	char	u_params2[64] = "";
-	char	*param1 = copy_bonus_flags(&str);
-	s_flags *flags = create_sf_element(param1, 'd');
-	fill_sf_element(flags, param1, 'd');
-	sleep(1);
+	char format[128] = "|%.5d|\n";
+	printf(format, -15);
+	ft_printf(format, -15);
 
-
-/*	printf("flags =\t%20s\n", flags);
-	printf("zero =\t%20p\n", pf_get_zero(flags));
-	printf("width =\t%20d\n", pf_get_min_width(flags));
-	printf("prec =\t%20d\n", pf_get_precision(flags));*/
 	return (0);
 }

@@ -12,13 +12,20 @@
 
 #include "ft_printf.h"
 
-int		process_sym(va_list *params)
+int max_int(int a, int b)
+{
+	if (a > b)
+		return (a);
+	return (b);
+}
+
+int process_sym(va_list *params, s_flags *flags)
 {
 	char	sym;
 	sym = (char) va_arg(*params, int);
 	if (sym == 0)
-		return (print_str(char_to_str(sym), 1, 1));
-	return (print_str(char_to_str(sym), 1, 0));
+		return (print_str(char_to_str(sym), 1, 1, flags));
+	return (print_str(char_to_str(sym), 1, 0, flags));
 }
 
 void	ft_putstr_fd2(char *s, int fd, int byte_n_diff)
